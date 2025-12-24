@@ -19,24 +19,27 @@ This project is a lightweight server that accepts temperature and humidity senso
 - `data.csv` — CSV storing timestamped sensor readings (columns: `datetime,temperature,humidity`).
 - `model.pkl` — pre-trained scikit-learn model (required to make predictions). Not checked in here — place it in the project root.
 
-> Note: `model.pkl` must implement `predict` and `predict_proba` and accept a 2D array shaped like [[temperature, dryness]].
+
 
 ## How the prediction is computed
 
 - The server computes `dryness = 100 - humidity` and passes `[temperature, dryness]` to the model.
 - The returned value is computed from `model.predict_proba(...)[0, 1] * 100` and rounded: this is returned as `probability` in the response.
 
-## Requirements
+## Installation
 
-- Python 3.9+
-- Suggested packages: `fastapi`, `uvicorn[standard]`, `pandas`, `numpy`, `joblib`, `scikit-learn`, `pydantic`.
-
-Example install (use a virtual environment):
+Recommended: use a virtual environment and install from `requirements.txt`.
 
 ```bash
 python -m venv .venv
 .\.venv\Scripts\activate    # Windows PowerShell
 pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+If you prefer not to use `requirements.txt`, install the main packages directly:
+
+```bash
 pip install fastapi uvicorn[standard] pandas numpy joblib scikit-learn pydantic
 ```
 
