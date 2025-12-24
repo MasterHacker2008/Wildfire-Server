@@ -46,16 +46,10 @@ model = joblib.load("model.pkl")
 
 def predict(temperature, humidity):
     """
-
-    - Converts humidity to a 'dryness' feature (100 - humidity)
     - Builds a 1x2 numpy array for the model
     - Returns the probability (0-100) 
     """
-  
-
-    # Convert humidity to dryness as a feature for the model
-    dryness = 100 - humidity
-    new_data = np.array([[temperature, dryness]])
+    new_data = np.array([[temperature, humidity]])
 
     # Run the model to get a predicted class and the probability for positive class
     prediction = model.predict(new_data)
@@ -101,6 +95,13 @@ async def post_data(data: SensorData):
     prediction_proba = predict(data.temperature, data.humidity)
 
     return {"probability": prediction_proba}
+
+@app.post("/predict")
+async def post_predict(data: SensorData):
+    prediction_proba = predict(data.temperature, data.humidity)
+
+    return {"probability": prediction_proba}
+
 
 
 @app.websocket("/ws")

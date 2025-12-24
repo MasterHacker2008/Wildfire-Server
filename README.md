@@ -23,8 +23,8 @@ This project is a lightweight server that accepts temperature and humidity senso
 
 ## How the prediction is computed
 
-- The server computes `dryness = 100 - humidity` and passes `[temperature, dryness]` to the model.
-- The returned value is computed from `model.predict_proba(...)[0, 1] * 100` and rounded: this is returned as `probability` in the response.
+- The server passes `[temperature, humidity]` to the model.
+- The returned value is computed from `model.predict_proba(...)` and rounded: this is returned as `probability` in the response.
 
 ## Installation
 
