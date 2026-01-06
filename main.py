@@ -16,7 +16,12 @@ import numpy as np
 import joblib  
 
 import pandas as pd 
+import requests
+
 import asyncio, json 
+
+
+SHEETY_API_URL = "https://api.sheety.co/b982dc067de514557385a7e09e000dfb/wildFireData/wildfireData"
 
 app = FastAPI()
 
@@ -67,33 +72,42 @@ update_event = asyncio.Event()
 
 @app.get("/data")
 async def get_data():
+    #initial idea save to csv
     """Return all stored sensor records from `data.csv` as JSON-serializable list."""
-    df = pd.read_csv("data.csv")
-    return df.to_dict(orient="records")
+    # df = pd.read_csv("data.csv")
+    # return df.to_dict(orient="records")
 
+    response = requests.get(SHEETY_API_URL).json()
+    return response["wildfireData"]
 
 @app.post("/data")
 async def post_data(data: SensorData):
     """Accept new sensor data, persist it, notify WebSocket clients, and return a prediction."""
     global latest_data
 
+    # Run model prediction and return the probability
+    prediction_proba = predict(data.temperature, data.humidity)
+
+
     # Build the new row: ISO timestamp, temperature, humidity
-    new_entry = [datetime.now().isoformat(), data.temperature, data.humidity]
+    new_entry = [datetime.now().isoformat(), data.temperature, data.humidity, prediction_proba]
+
 
     # Keep an in-memory copy of the latest entry for quick access by websockets
-    latest_data = {"datetime": new_entry[0], "temperature": new_entry[1], "humidity": new_entry[2]}
+    latest_data = {"datetime": new_entry[0], "temperature": new_entry[1], "humidity": new_entry[2], "prediction":  new_entry[3]}
 
     # Append to CSV storage
-    df = pd.read_csv("data.csv")
-    df.loc[len(df)] = new_entry
-    df.to_csv("data.csv", index=False)
+    # df = pd.read_csv("data.csv")
+    # df.loc[len(df)] = new_entry
+    # df.to_csv("data.csv", index=False)
+
+    # Post to Sheety API
+    requests.post(SHEETY_API_URL, json={"wildfireDatum": latest_data})
 
     # Wake any awaiting websocket clients so they can push the new data
     update_event.set()
 
-    # Run model prediction and return the probability
-    prediction_proba = predict(data.temperature, data.humidity)
-
+    
     return {"probability": prediction_proba}
 
 @app.post("/predict")
