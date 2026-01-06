@@ -6,20 +6,19 @@
 
 ## Overview
 
-This project is a lightweight server that accepts temperature and humidity sensor data, stores it in `data.csv`, and returns a predicted risk probability (0–100%) using a pre-trained model (`model.pkl`). It also exposes historical data and a WebSocket to notify clients of new sensor readings.
+This project is a lightweight server that accepts temperature and humidity sensor data, stores it in a Google Sheet using the Sheety API, and returns a predicted risk probability (0–100%) using a pre-trained model (`model.pkl`). It also exposes historical data (fetched from the Google Sheet) and a WebSocket to notify clients of new sensor readings.
 
 ## Files
 
 - `main.py` — FastAPI application. Provides endpoints:
-  - `GET /data` — returns the contents of `data.csv` as JSON (list of records).
-  - `POST /data` — accepts JSON with `temperature` and `humidity`, appends a timestamped row to `data.csv`, runs the prediction, and returns `{ "probability": <int> }`.
+
+  - `GET /data` — fetches historical records from the configured Google Sheet via the Sheety API and returns them as JSON (list of records).
+  - `POST /data` — accepts JSON with `temperature` and `humidity`, posts a timestamped row to the Google Sheet via the Sheety API, runs the prediction, and returns `{ "probability": <int> }`.
   - `WebSocket /ws` — pushes new readings to connected clients when new data is posted.
 
 - `test.py` — small script to load `model.pkl` and make a single example prediction.
-- `data.csv` — CSV storing timestamped sensor readings (columns: `datetime,temperature,humidity`).
+- `Google Sheet (via Sheety API)` — Google Sheet storing timestamped sensor readings (columns: `datetime,temperature,humidity,prediction`). The app reads/writes rows through the Sheety API.
 - `model.pkl` — pre-trained scikit-learn model (required to make predictions). Not checked in here — place it in the project root.
-
-
 
 ## How the prediction is computed
 
@@ -78,8 +77,8 @@ print(r.json())
 - Connect to the WebSocket (JavaScript example):
 
 ```js
-const ws = new WebSocket('ws://127.0.0.1:8000/ws');
-ws.onmessage = e => console.log('new data:', e.data);
+const ws = new WebSocket("ws://127.0.0.1:8000/ws");
+ws.onmessage = (e) => console.log("new data:", e.data);
 ```
 
 ## Testing
@@ -88,7 +87,7 @@ Run `python test.py` to load `model.pkl` and make a sample prediction. This help
 
 ## Data format
 
-- `data.csv` columns: `datetime` (ISO timestamp), `temperature` (float), `humidity` (float).
+- Google Sheet columns: `datetime` (ISO timestamp), `temperature` (float), `humidity` (float), `prediction` (numeric).
 
 ## Notes & Tips 💡
 
@@ -97,5 +96,3 @@ Run `python test.py` to load `model.pkl` and make a sample prediction. This help
 - `update_event` is used internally to notify websocket clients when new data arrives.
 
 ---
-
-

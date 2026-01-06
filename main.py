@@ -1,8 +1,8 @@
 """Simple FastAPI server for collecting sensor data and sending updates.
 
 This service provides:
-- HTTP GET /data : returns all stored sensor records from `data.csv` as a list of dicts
-- HTTP POST /data : accept `temperature` and `humidity`, append to `data.csv`, run prediction, and notify WebSocket clients
+- HTTP GET /data : fetches stored sensor records from a Google Sheet via the Sheety API and returns them as a list of dicts
+- HTTP POST /data : accept `temperature` and `humidity`, post a timestamped row to the Google Sheet via the Sheety API, run prediction, and notify WebSocket clients
 - WebSocket /ws : pushes the most recent data to connected clients when new data arrives
 """
 
@@ -72,8 +72,9 @@ update_event = asyncio.Event()
 
 @app.get("/data")
 async def get_data():
-    #initial idea save to csv
-    """Return all stored sensor records from `data.csv` as JSON-serializable list."""
+    # Data is stored in a Google Sheet; use the Sheety API to fetch rows
+    """Return all stored sensor records from the configured Google Sheet via the Sheety API as a JSON-serializable list."""
+    # (Legacy: previously read from `data.csv` using pandas)
     # df = pd.read_csv("data.csv")
     # return df.to_dict(orient="records")
 
@@ -96,7 +97,8 @@ async def post_data(data: SensorData):
     # Keep an in-memory copy of the latest entry for quick access by websockets
     latest_data = {"datetime": new_entry[0], "temperature": new_entry[1], "humidity": new_entry[2], "prediction":  new_entry[3]}
 
-    # Append to CSV storage
+    # (Legacy) CSV append code removed — data is posted to the configured Google Sheet via the Sheety API
+    # (example legacy code kept here for reference)
     # df = pd.read_csv("data.csv")
     # df.loc[len(df)] = new_entry
     # df.to_csv("data.csv", index=False)
