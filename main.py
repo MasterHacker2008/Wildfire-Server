@@ -74,12 +74,15 @@ update_event = asyncio.Event()
 async def get_data():
     # Data is stored in a Google Sheet; use the Sheety API to fetch rows
     """Return all stored sensor records from the configured Google Sheet via the Sheety API as a JSON-serializable list."""
-    # (Legacy: previously read from `data.csv` using pandas)
-    # df = pd.read_csv("data.csv")
-    # return df.to_dict(orient="records")
 
-    response = requests.get(SHEETY_API_URL).json()
-    return response["wildfireData"]
+    try:
+        # Attempt to fetch data from the Sheety API; if it fails - Due to API usage limits, fall back to reading from a local CSV (legacy behavior) 
+        response = requests.get(SHEETY_API_URL).json()
+        return response["wildfireData"]
+    except Exception as e:
+        # (Legacy: previously read from `data.csv` using pandas)
+        df = pd.read_csv("data.csv")
+        return df.to_dict(orient="records")
 
 @app.post("/data")
 async def post_data(data: SensorData):
