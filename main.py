@@ -25,7 +25,7 @@ SHEETY_API_URL = "https://api.sheety.co/b982dc067de514557385a7e09e000dfb/wildFir
 
 app = FastAPI()
 
-# Allow cross-origin requests
+# Allow all requests so that the pico can send info to the website
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  
@@ -39,13 +39,13 @@ class SensorData(BaseModel):
     """Schema for incoming sensor payloads."""
     temperature: float  # degrees (e.g., Celsius)
     humidity: float     # relative humidity (0-100)
+    m_alert: bool       #Manual alert (True or False)
 
 
 # Stores the most recently posted sensor reading (sent to WebSocket clients)
 latest_data = None
 
 # Load a pre-trained logistic regression model from disk.
-# The code assumes `model.pkl` exists and exposes `predict` and `predict_proba`.
 model = joblib.load("model.pkl") 
 
 
@@ -105,6 +105,11 @@ async def post_data(data: SensorData):
 
     # Post to Sheety API
     requests.post(SHEETY_API_URL, json={"wildfireDatum": latest_data})
+
+    #adding m_alert later since manual alerts dont have to be documented in the database but the websockets needs it to send it to the website
+
+    latest_data = {"datetime": new_entry[0], "temperature": new_entry[1], "humidity": new_entry[2],
+                   "prediction": new_entry[3], "m_alert": data.m_alert}
 
     # Wake any awaiting websocket clients so they can push the new data
     update_event.set()
